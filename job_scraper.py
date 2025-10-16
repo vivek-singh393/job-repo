@@ -41,4 +41,3 @@ def save_jobs(jobs_24h, jobs_3d):
 if __name__ == "__main__":
     jobs_24h, jobs_3d = fetch_naukri_jobs()
     save_jobs(jobs_24h, jobs_3d)
-``
