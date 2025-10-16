@@ -3,28 +3,25 @@ import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-def main():
+def send_email():
     sender_email = os.environ.get("EMAIL_ADDRESS")
-    sender_password = os.environ.get("EMAIL_PASSWORD")
+    password = os.environ.get("EMAIL_PASSWORD")
     receiver_email = sender_email
 
-    if os.path.exists("job_listings.txt"):
-        with open("job_listings.txt", "r", encoding="utf-8") as f:
-            job_content = f.read()
-    else:
-        job_content = "No job listings found."
+    with open("job_listings.txt", "r", encoding="utf-8") as f:
+        job_content = f.read()
 
-    message = MIMEMultipart()
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "🛠️ Daily DevOps/SRE Job Alerts"
     message["From"] = sender_email
     message["To"] = receiver_email
-    message["Subject"] = "Daily DevOps/SRE Job Alerts"
 
-    message.attach(MIMEText(job_content, "plain"))
+    part = MIMEText(job_content, "html")
+    message.attach(part)
 
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login(sender_email, sender_password)
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, message.as_string())
 
 if __name__ == "__main__":
-    main()
+    send_email()
