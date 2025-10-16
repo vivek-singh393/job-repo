@@ -2,33 +2,45 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 
-def fetch_indeed_jobs():
-    url = "https://www.indeed.com/jobs?q=devops+OR+sre&fromage=1"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
+def fetch_naukri_jobs():
+    url = "https://www.naukri.com/devops-sre-jobs"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
     jobs = []
-
-    for div in soup.find_all(name="div", attrs={"class":"job_seen_beacon"}):
-        title = div.find("h2", {"class": "jobTitle"})
-        company = div.find("span", {"class": "companyName"})
-        location = div.find("div", {"class": "companyLocation"})
-        link = div.find("a", href=True)
-        if title and company and location and link:
-            job = {
-                "title": title.text.strip(),
-                "company": company.text.strip(),
-                "location": location.text.strip(),
-                "link": "https://www.indeed.com" + link["href"]
-            }
-            jobs.append(job)
+    for job_card in soup.select('.jobTuple'):
+        title = job_card.select_one('.title').get_text(strip=True)
+        company = job_card.select_one('.companyName').get_text(strip=True)
+        location = job_card.select_one('.location').get_text(strip=True)
+        jobs.append(f"Naukri: {title} at {company} in {location}")
     return jobs
 
-def save_jobs(jobs, filename="job_listings.txt"):
-    with open(filename, "w", encoding="utf-8") as f:
-        for job in jobs:
-            f.write(f"{job['title']} at {job['company']} ({job['location']})\n{job['link']}\n\n")
+def fetch_ziprecruiter_jobs():
+    url = "https://www.ziprecruiter.com/candidate/search?search=DevOps+SRE"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    jobs = []
+    for job_card in soup.select('.job_content'):
+        title_tag = job_card.select_one('.job_title')
+        company_tag = job_card.select_one('.company_name')
+        location_tag = job_card.select_one('.location')
+        if title_tag and company_tag and location_tag:
+            title = title_tag.get_text(strip=True)
+            company = company_tag.get_text(strip=True)
+            location = location_tag.get_text(strip=True)
+            jobs.append(f"ZipRecruiter: {title} at {company} in {location}")
+    return jobs
+
+def main():
+    all_jobs = []
+    all_jobs.extend(fetch_naukri_jobs())
+    all_jobs.extend(fetch_ziprecruiter_jobs())
+
+    with open("job_listings.txt", "w", encoding="utf-8") as f:
+        if all_jobs:
+            f.write("\n".join(all_jobs))
+        else:
+            f.write("No job listings found in the last 24 hours.")
 
 if __name__ == "__main__":
-    jobs = fetch_indeed_jobs()
-    save_jobs(jobs)
+    main()
+``
